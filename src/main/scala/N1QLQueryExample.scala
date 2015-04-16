@@ -19,30 +19,34 @@ object N1QLQueryExample {
     // Generate The Context
     val sc = new SparkContext(cfg)
 
+    // Spark SQL Setup
     val sql = new SQLContext(sc)
 
-    // manual schema
+    // Plain old Spark emitting RDDs from a N1QL Query result
+    sc.couchbaseQuery(Query.simple("SELECT * from `travel-sample` LIMIT 10"))
+      .collect()
+      .foreach(println)
+
+    // Create a DataFrame with Schema Inference
+    val df = sql.n1ql(filter = EqualTo("type", "airline"))
+
+    // A DataFrame can also be created from an explicit schema
     /*val df = sql.n1ql(StructType(
       StructField("name", StringType) ::
       StructField("abv", DoubleType) ::
       StructField("type", StringType) :: Nil
     ))*/
 
-    // schema inference
-    val df = sql.n1ql(filter = EqualTo("type", "airline"))
-
+    // Print The Schema
     df.printSchema()
 
     // SparkSQL Integration
-//    df
-//      .select("name", "callsign")
-//      .sort(df("callsign").desc)
-//      .show(10)
+    df
+      .select("name", "callsign")
+      .sort(df("callsign").desc)
+      .show(10)
 
-    // Plain old Spark emitting RDDs
-//    sc.couchbaseQuery(Query.simple("SELECT * from `travel-sample`"))
-//      .collect()
-//      .foreach(println)
+
   }
 
 

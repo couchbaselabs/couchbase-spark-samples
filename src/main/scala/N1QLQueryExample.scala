@@ -28,7 +28,7 @@ object N1QLQueryExample {
       .foreach(println)
 
     // Create a DataFrame with Schema Inference
-    val df = sql.n1ql(filter = EqualTo("type", "airline"))
+    val df = sql.read.couchbase(schemaFilter = EqualTo("type", "airline"))
 
     // A DataFrame can also be created from an explicit schema
     /*val df = sql.n1ql(StructType(

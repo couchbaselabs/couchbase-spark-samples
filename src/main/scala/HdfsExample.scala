@@ -24,18 +24,18 @@ object HdfsExample {
 
     // Write Data into HDFS
     // ! do once to load and then comment out ... !
-    /*sc.couchbaseQuery(Query.simple("SELECT `travel-sample`.* from `travel-sample` WHERE type = 'landmark'"))
+    sc.couchbaseQuery(Query.simple("SELECT `travel-sample`.* from `travel-sample` WHERE type = 'landmark'"))
       .map(_.value.toString)
-      .saveAsTextFile("hdfs://127.0.0.1:9000/landmarks")*/
+      .saveAsTextFile("hdfs://127.0.0.1:9000/landmarks")
 
     // Load Data from HDFS and Join with Data in Couchbase
 
     // Load Landmarks from HDFS
-    val landmarks = sql.jsonFile("hdfs://127.0.0.1:9000/landmarks/*")
+    val landmarks = sql.read.json("hdfs://127.0.0.1:9000/landmarks/*")
     landmarks.registerTempTable("landmarks")
 
     // Load Airports from Couchbase
-    val airports = sql.n1ql(filter = EqualTo("type", "airport"))
+    val airports = sql.read.couchbase(schemaFilter = EqualTo("type", "airport"))
 
     // find all landmarks in the same city as the given FAA code
     val toFind = "SFO" // try SFO or LAX

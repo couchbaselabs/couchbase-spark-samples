@@ -15,3 +15,5 @@ libraryDependencies ++= Seq(
 )
 
 resolvers += Resolver.mavenLocal
+
+resolvers += "Couchbase Repository" at "http://files.couchbase.com/maven2/"

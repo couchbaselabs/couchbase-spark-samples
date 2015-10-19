@@ -6,12 +6,6 @@ import org.apache.spark.streaming.twitter.TwitterUtils
 
 import com.couchbase.spark._
 
-/**
- * .
- *
- * @author Michael Nitschinger
- * @since
- */
 object TwitterFeed {
 
   def main(args: Array[String]): Unit = {

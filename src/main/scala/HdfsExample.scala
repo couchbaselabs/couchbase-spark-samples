@@ -1,5 +1,4 @@
-import com.couchbase.client.java.document.JsonDocument
-import com.couchbase.client.java.query.{N1qlQuery}
+import com.couchbase.client.java.query.N1qlQuery
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.sources.EqualTo
 import org.apache.spark.{SparkContext, SparkConf}
@@ -24,9 +23,10 @@ object HdfsExample {
 
     // Write Data into HDFS
     // ! do once to load and then comment out ... !
-//    sc.couchbaseQuery(N1qlQuery.simple("SELECT `travel-sample`.* from `travel-sample` WHERE type = 'landmark'"))
-//      .map(_.value.toString)
-//      .saveAsTextFile("hdfs://127.0.0.1:9000/landmarks")
+    val query = "SELECT `travel-sample`.* from `travel-sample` WHERE type = 'landmark'"
+    sc.couchbaseQuery(N1qlQuery.simple(query))
+      .map(_.value.toString)
+      .saveAsTextFile("hdfs://127.0.0.1:9000/landmarks")
 
     // Load Data from HDFS and Join with Data in Couchbase
 

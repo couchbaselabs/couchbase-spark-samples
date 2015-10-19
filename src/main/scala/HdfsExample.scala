@@ -1,5 +1,5 @@
 import com.couchbase.client.java.document.JsonDocument
-import com.couchbase.client.java.query.Query
+import com.couchbase.client.java.query.{N1qlQuery}
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.sources.EqualTo
 import org.apache.spark.{SparkContext, SparkConf}
@@ -24,9 +24,9 @@ object HdfsExample {
 
     // Write Data into HDFS
     // ! do once to load and then comment out ... !
-    sc.couchbaseQuery(Query.simple("SELECT `travel-sample`.* from `travel-sample` WHERE type = 'landmark'"))
-      .map(_.value.toString)
-      .saveAsTextFile("hdfs://127.0.0.1:9000/landmarks")
+//    sc.couchbaseQuery(N1qlQuery.simple("SELECT `travel-sample`.* from `travel-sample` WHERE type = 'landmark'"))
+//      .map(_.value.toString)
+//      .saveAsTextFile("hdfs://127.0.0.1:9000/landmarks")
 
     // Load Data from HDFS and Join with Data in Couchbase
 
@@ -42,10 +42,9 @@ object HdfsExample {
 
     airports
       .join(landmarks, airports("city") === landmarks("city"))
-      .select(airports("faa"), landmarks("name"), landmarks("url"))
       .where(airports("faa") === toFind and landmarks("url").isNotNull)
+      .select(landmarks("name"), landmarks("address"), airports("faa"))
       .orderBy(landmarks("name").asc)
-      .show(20)
-
+      .show()
   }
 }

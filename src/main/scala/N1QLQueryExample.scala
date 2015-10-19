@@ -1,5 +1,5 @@
 import com.couchbase.client.java.document.JsonDocument
-import com.couchbase.client.java.query.Query
+import com.couchbase.client.java.query.N1qlQuery
 import com.couchbase.spark._
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.sources.EqualTo
@@ -23,7 +23,7 @@ object N1QLQueryExample {
     val sql = new SQLContext(sc)
 
     // Plain old Spark emitting RDDs from a N1QL Query result
-    sc.couchbaseQuery(Query.simple("SELECT * from `travel-sample` LIMIT 10"))
+    sc.couchbaseQuery(N1qlQuery.simple("SELECT * from `travel-sample` LIMIT 10"))
       .collect()
       .foreach(println)
 

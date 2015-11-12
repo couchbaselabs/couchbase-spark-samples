@@ -11,7 +11,7 @@ object N1QLQueryExample {
 
     // Configure Spark
     val cfg = new SparkConf()
-      .setAppName("keyValueExample")
+      .setAppName("n1qlQueryExample")
       .setMaster("local[*]")
       .set("com.couchbase.bucket.travel-sample", "")
 

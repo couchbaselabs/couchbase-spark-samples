@@ -11,5 +11,6 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-streaming" % "1.4.1",
   "org.apache.spark" %% "spark-sql" % "1.4.1",
   "com.couchbase.client" %% "spark-connector" % "1.0.0",
-  "org.apache.spark" %% "spark-streaming-twitter" % "1.4.0"
+  "org.apache.spark" %% "spark-streaming-twitter" % "1.4.0",
+  "mysql" % "mysql-connector-java" % "5.1.37"
 )

@@ -13,29 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.couchbase.client.java.document.JsonDocument
-import org.apache.spark.{SparkContext, SparkConf}
-import com.couchbase.spark._
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.sources.EqualTo
+import org.apache.spark.{SparkConf, SparkContext}
+import com.couchbase.spark.sql._
 
-object KeyValueExample {
+// Airline has subset of the fields that are in the database
+case class Airline(name: String, iata: String, icao: String, country: String)
+
+object DatasetExample {
 
   def main(args: Array[String]): Unit = {
-
     // Configure Spark
     val cfg = new SparkConf()
-      .setAppName("keyValueExample")
+      .setAppName("n1qlQueryExample")
       .setMaster("local[*]")
       .set("com.couchbase.bucket.travel-sample", "")
 
     // Generate The Context
     val sc = new SparkContext(cfg)
 
-    sc
-      .parallelize(Seq("airline_10123", "airline_10748")) // Define Document IDs
-      .couchbaseGet[JsonDocument]() // Load them from Couchbase
-      .map(_.content()) // extract the content
-      .collect() // collect all data
-      .foreach(println) // print it out
+    // Spark SQL Setup
+    val sql = new SQLContext(sc)
+    import sql.implicits._
+
+    val airlines = sql.read.couchbase(schemaFilter = EqualTo("type", "airline")).as[Airline]
+
+    // Print schema
+    airlines.printSchema()
+
+    // Print airlines that start with A
+    airlines.map(_.name).filter(_.toLowerCase.startsWith("a")).foreach(println(_))
   }
 
 }

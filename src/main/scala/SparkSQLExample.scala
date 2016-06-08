@@ -37,12 +37,12 @@ object SparkSQLExample {
     val sql = new SQLContext(sc)
 
     // Plain old Spark emitting RDDs from a N1QL Query result
-    sc.couchbaseQuery(N1qlQuery.simple("SELECT * from `travel-sample` LIMIT 10"))
-      .collect()
-      .foreach(println)
+//    sc.couchbaseQuery(N1qlQuery.simple("SELECT * from `travel-sample` LIMIT 10"))
+//      .collect()
+//      .foreach(println)
 
     // Create a DataFrame with Schema Inference
-    val df = sql.read.couchbase(schemaFilter = EqualTo("type", "airline"))
+//    val df = sql.read.couchbase(schemaFilter = EqualTo("type", "airline"))
 
     // A DataFrame can also be created from an explicit schema
     /*val df = sql.n1ql(StructType(
@@ -52,13 +52,35 @@ object SparkSQLExample {
     ))*/
 
     // Print The Schema
-    df.printSchema()
+//    df.printSchema()
 
     // SparkSQL Integration
-    df
-      .select("name", "callsign")
-      .sort(df("callsign").desc)
-      .show(10)
+//    df
+//      .select("name", "callsign")
+//      .sort(df("callsign").desc)
+//      .show(10)
+
+
+
+    // Step 1, (comment me out) -> store landmarks in parquet
+    //val landmarks = sql.read.couchbase(schemaFilter = EqualTo("type", "landmark"))
+    //landmarks.write.parquet("landmarks")
+
+    val landmarks = sql.read.parquet("landmarks")
+
+    // Load Airports from Couchbase
+    val airports = sql.read.couchbase(schemaFilter = EqualTo("type", "airport"))
+
+    // find all landmarks in the same city as the given FAA code
+    val toFind = "SFO" // try SFO or LAX
+
+    airports
+      .join(landmarks, airports("city") === landmarks("city"))
+      .where(airports("faa") === toFind and landmarks("url").isNotNull)
+      .select(landmarks("name"), landmarks("address"), airports("faa"))
+      .orderBy(landmarks("name").asc)
+      .show()
+
   }
 
 

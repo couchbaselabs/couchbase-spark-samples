@@ -16,6 +16,7 @@
 import com.couchbase.client.java.query.N1qlQuery
 import org.apache.spark.{SparkContext, SparkConf}
 import com.couchbase.spark._
+import java.io.File
 
 import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
 
@@ -37,9 +38,9 @@ object Word2VecExample {
 
     // Find the synonyms in the trained model and print them out
     val synonyms = model
-      .findSynonyms("hotel", 10)
+      .findSynonyms(args.lift(0).getOrElse("hotel"), args.lift(1).map(_.toInt).getOrElse(10))
       .foreach { case (syn, sim) =>
-        println(s"\tFound Synonym --> $syn  <-- with a similarity of $sim")
+        println(s"\t(•͡˘㇁•͡˘) --> \t[$syn] (with a similarity of $sim)")
       }
 
     sc.stop()
@@ -53,7 +54,7 @@ object Word2VecExample {
     val word2vec = new Word2Vec
     val path = "reviews"
 
-    if (!new java.io.File(path).exists) {
+    if (!new File(path).exists) {
       val reviews = "SELECT m.content from (" +
         "SELECT ELEMENT reviews FROM `travel-sample` WHERE type = 'hotel' AND ARRAY_LENGTH(reviews) > 0" +
         ") AS x UNNEST x AS m;"

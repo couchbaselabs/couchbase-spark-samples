@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Couchbase, Inc.
+ * Copyright (c) 2016 Couchbase, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ import com.couchbase.client.java.document.json.JsonObject;
 import com.couchbase.client.java.query.N1qlQuery;
 import com.couchbase.spark.japi.CouchbaseSparkContext;
 import com.couchbase.spark.rdd.CouchbaseQueryRow;
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.DataFrame;
-import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.sources.EqualTo;
 
 import java.util.Arrays;
@@ -33,19 +33,28 @@ import static com.couchbase.spark.japi.CouchbaseDocumentRDD.couchbaseDocumentRDD
 import static com.couchbase.spark.japi.CouchbaseRDD.couchbaseRDD;
 import static com.couchbase.spark.japi.CouchbaseSparkContext.couchbaseContext;
 
+/**
+ * This example shows how to use Spark and the Couchbase Connector from Java.
+ *
+ * @author Michael Nitschinger
+ */
 public class JavaExample {
 
     public static void main(String[] args) {
-        
-        SparkConf conf = new SparkConf()
-            .setAppName("javaSample")
-            .setMaster("local[*]")
-            .set("com.couchbase.bucket.travel-sample", "");
 
-        JavaSparkContext sc = new JavaSparkContext(conf);
+        SparkSession spark = SparkSession
+            .builder()
+            .appName("JavaExample")
+            .master("local[*]") // use the JVM as the master, great for testing
+            .config("spark.couchbase.nodes", "127.0.0.1") // connect to couchbase on localhost
+            .config("spark.couchbase.bucket.travel-sample", "") // open the travel-sample bucket with empty password
+            .getOrCreate();
 
-        // The Couchbase-Enabled spark context
-        CouchbaseSparkContext csc = couchbaseContext(sc);
+        // The Java wrapper around the SparkContext
+        JavaSparkContext jsc = new JavaSparkContext(spark.sparkContext());
+
+        // The Couchbase-Enabled SparkContext
+        CouchbaseSparkContext csc = couchbaseContext(jsc);
 
         // Load docs through K/V
         List<JsonDocument> docs = csc
@@ -54,7 +63,7 @@ public class JavaExample {
         System.out.println(docs);
 
         // Load docs through K/V from a mapped RDD
-        JavaRDD<String> ids = sc.parallelize(Arrays.asList("airline_10226", "airline_10748"));
+        JavaRDD<String> ids = jsc.parallelize(Arrays.asList("airline_10226", "airline_10748"));
         docs = couchbaseRDD(ids).couchbaseGet().collect();
         System.out.println(docs);
 
@@ -67,14 +76,15 @@ public class JavaExample {
 
         // Store A (empty) Document
         couchbaseDocumentRDD(
-            sc.parallelize(Arrays.asList(JsonDocument.create("doc1", JsonObject.empty())))
+            jsc.parallelize(Arrays.asList(JsonDocument.create("doc1", JsonObject.empty())))
         ).saveToCouchbase();
 
-        // Use SparkSQL from Java
-        SQLContext sql = new SQLContext(sc);
-
         // Wrap the Reader and create the DataFrame from Couchbase
-        DataFrame airlines = couchbaseReader(sql.read()).couchbase(new EqualTo("type", "airline"));
+        // Note that since Spark 2.0, a DataFrame == Dataset<Row>
+        Dataset<Row> airlines = couchbaseReader(spark.read()).couchbase(new EqualTo("type", "airline"));
+
+        // Print the Inferred Schema
+        airlines.printSchema();
 
         // Print the number of airline
         System.out.println("Number of Airlines: " + airlines.count());

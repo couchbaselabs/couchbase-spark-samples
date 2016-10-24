@@ -13,52 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.couchbase.spark._
+import com.couchbase.client.java.query.N1qlQuery
 import org.apache.spark.sql.SparkSession
+import com.couchbase.spark._
 
 /**
-  * This example shows how to use the Subdocument API which has been introduced with
-  * Couchbase Server 4.5.0.
+  * This example shows how to perform a "raw" N1QL query generating an RDD.
+  *
+  * If you want to work with Spark SQL, please see [[SparkSQLExample]].
+  *
+  * This code prints:
+  *
+  * {{{
+  * {"count":1560,"country":"United States"}
+  * {"count":221,"country":"France"}
+  * {"count":187,"country":"United Kingdom"}
+  * }}}
   *
   * @author Michael Nitschinger
   */
-object SubdocExample {
+object N1QLExample {
 
   def main(args: Array[String]): Unit = {
 
     // The SparkSession is the main entry point into spark
     val spark = SparkSession
       .builder()
-      .appName("SubdocExample")
+      .appName("N1QLExample")
       .master("local[*]") // use the JVM as the master, great for testing
       .config("spark.couchbase.nodes", "127.0.0.1") // connect to couchbase on localhost
       .config("spark.couchbase.bucket.travel-sample", "") // open the travel-sample bucket with empty password
       .getOrCreate()
 
+    // This query groups airports by country and counts them.
+    val query = N1qlQuery.simple("" +
+      "select country, count(*) as count " +
+      "from `travel-sample` " +
+      "where type = 'airport' " +
+      "group by country " +
+      "order by count desc")
 
-    val result = spark.sparkContext.couchbaseSubdocLookup(
-      Seq("airline_10123"), // fetch these document ids
-      Seq("name", "iata"),  // only fetch their name and iata code
-      Seq("foobar") // but also check if the foobar key exists in the doc
-    ).collect()
-
-    // Prints
-    // SubdocLookupResult(
-    //    airline_10123,0,Map(name -> Texas Wings, iata -> TQ),Map(foobar -> false)
-    // )
-    result.foreach(println)
-
-    // Same as above, but omits the exists check, just looks up the fields.
-    val r2  = spark.sparkContext.couchbaseSubdocLookup(
-      Seq("airline_10123"),
-      Seq("name", "iata")
-    )
-
-    // Prints
-    // SubdocLookupResult(
-    //    airline_10123,0,Map(name -> Texas Wings, iata -> TQ),Map()
-    // )
-    r2.foreach(println)
-
+    // Perform the query and print the country name and the count.
+    spark.sparkContext
+      .couchbaseQuery(query)
+      .map(_.value)
+      .foreach(println)
   }
 }

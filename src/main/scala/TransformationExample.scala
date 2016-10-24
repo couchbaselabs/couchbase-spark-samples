@@ -17,11 +17,11 @@ import com.couchbase.client.java.document.JsonDocument
 import com.couchbase.client.java.document.json.JsonObject
 import com.couchbase.spark._
 import com.couchbase.spark.streaming._
-import org.apache.spark.sql.{DataFrameReader, SQLContext}
+import org.apache.spark.sql.{DataFrameReader, SQLContext, SparkSession}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-import org.apache.spark.{SparkConf, SparkContext}
 
-/** A sample Apache Spark program to show how Couchbase may be used with Spark
+/**
+  * A sample Apache Spark program to show how Couchbase may be used with Spark
   * when doing data transformations.
   *
   * Assuming a MySQL Database and documents with this format:
@@ -34,14 +34,10 @@ import org.apache.spark.{SparkConf, SparkContext}
   *
   * Stream out all documents, look them up in the data loaded from mysql, join on
   * the email address and add the entitlement token.
+  *
+  * If you run this in the IDE, make sure to set the master to local[*]!
   */
 object TransformationExample {
-
-  val conf = new SparkConf().setMaster("local[*]")
-    .setAppName("TransformationExample")
-    .set("com.couchbase.bucket.transformative", "letmein") // Configure for the Couchbase bucket "transformative" with "password"
-
-  val sc = new SparkContext(conf)
 
   /** Returns a JsonDocument based on a tuple of two strings */
   def CreateDocument(s: (String, String)): JsonDocument = {
@@ -77,19 +73,21 @@ object TransformationExample {
   }
 
   def main(args: Array[String]): Unit = {
-
-    System.setProperty("com.couchbase.dcpEnabled", "true")
-
     Class.forName("com.mysql.jdbc.Driver").newInstance // Load the MySQL Connector
 
+    // Initialize the spark session.
+    val spark = SparkSession
+      .builder()
+      .appName("TransformationExample")
+      // Configure for the Couchbase bucket "transformative" with "letmein"
+      .config("spark.couchbase.bucket.transformative", "letmein")
+      .getOrCreate()
 
-    val mysqlReader = getMysqlReader(new org.apache.spark.sql.SQLContext(sc)) // set up a MySQL Reader
+    val mysqlReader = getMysqlReader(spark.sqlContext) // set up a MySQL Reader
 
     // Note that if the database was quite large you could push down other predicates to MySQL or partition
     // the DataFrame
     //    mysqlReader.load().filter("email = \"matt@email.com\"")
-
-
 
     // load the DataFrame of all of the users from MySQL.
     // Note, appending .cache() may make sense here (or not) depending on amount of data.
@@ -106,7 +104,7 @@ object TransformationExample {
 
     val entitlementsSansSchema = entitlements.rdd.map[(String, Integer)](f => (f.getAs[String]("email"), f.getAs[Integer]("entitlementtoken")))
 
-    val ssc = new StreamingContext(sc, Seconds(5))
+    val ssc = new StreamingContext(spark.sparkContext, Seconds(5))
 
     ssc.couchbaseStream("transformative")
       .filter(_.isInstanceOf[Mutation])

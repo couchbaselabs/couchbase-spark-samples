@@ -14,27 +14,37 @@
 * limitations under the License.
 */
 import com.couchbase.client.java.query.N1qlQuery
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.SparkContext
 import com.couchbase.spark._
 import java.io.File
 
 import org.apache.spark.mllib.feature.{Word2Vec, Word2VecModel}
+import org.apache.spark.sql.SparkSession
 
+/**
+  * This example shows how to use the Machine Learning Word2Vec model together with Couchbase.
+  *
+  * It takes reviews from the travel-sample bucket, trains the model and then searches for
+  * synonyms for "hotel".
+  *
+  * @author Will Gardella
+  * @author Michael Nitschinger
+  */
 object Word2VecExample {
 
   def main(args: Array[String]): Unit = {
 
-    // Configure Spark
-    val cfg = new SparkConf()
-      .setAppName("Word2VecExample")
-      .setMaster("local[*]")
-      .set("com.couchbase.bucket.travel-sample", "")
-
-    // Generate The Context
-    val sc = new SparkContext(cfg)
+    // The SparkSession is the main entry point into spark
+    val spark = SparkSession
+      .builder()
+      .appName("Word2VecExample")
+      .master("local[*]") // use the JVM as the master, great for testing
+      .config("spark.couchbase.nodes", "127.0.0.1") // connect to couchbase on localhost
+      .config("spark.couchbase.bucket.travel-sample", "") // open the travel-sample bucket with empty password
+      .getOrCreate()
 
     // Train the model if not trained already
-    val model = trainAndLoadModel(sc)
+    val model = trainAndLoadModel(spark.sparkContext)
 
     // Find the synonyms in the trained model and print them out
     val synonyms = model
@@ -43,7 +53,7 @@ object Word2VecExample {
         println(s"\t(•͡˘㇁•͡˘) --> \t[$syn] (with a similarity of $sim)")
       }
 
-    sc.stop()
+    spark.stop()
   }
 
   /**

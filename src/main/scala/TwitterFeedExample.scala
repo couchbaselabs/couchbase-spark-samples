@@ -21,7 +21,12 @@ import org.apache.spark.streaming.twitter.TwitterUtils
 
 import com.couchbase.spark._
 
-object TwitterFeed {
+/**
+  * This example is the classic twitter feed example but shows how to store the data into Couchbase.
+  *
+  * @author Michael Nitschinger
+  */
+object TwitterFeedExample {
 
   def main(args: Array[String]): Unit = {
     if (args.length < 4) {
@@ -30,9 +35,9 @@ object TwitterFeed {
 
     // Configure Spark
     val cfg = new SparkConf()
-      .setAppName("TwitterFeed")
+      .setAppName("TwitterFeedExample")
       .setMaster("local[*]")
-      .set("com.couchbase.bucket.twitter", "")
+      .set("spark.couchbase.bucket.twitter", "")
 
     val Array(consumerKey, consumerSecret, accessToken, accessTokenSecret) = args.take(4)
     System.setProperty("twitter4j.oauth.consumerKey", consumerKey)
@@ -49,11 +54,9 @@ object TwitterFeed {
       rdd
         .map(status => JsonDocument.create(status.getId.toString, JsonObject.create().put("text", status.getText)))
         .saveToCouchbase()
-
     })
 
     ssc.start()
     ssc.awaitTermination()
-
   }
 }

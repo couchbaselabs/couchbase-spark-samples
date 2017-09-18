@@ -79,8 +79,10 @@ object TransformationExample {
     val spark = SparkSession
       .builder()
       .appName("TransformationExample")
-      // Configure for the Couchbase bucket "transformative" with "letmein"
-      .config("spark.couchbase.bucket.transformative", "letmein")
+      // Configure for the Couchbase bucket "transformative"
+      .config("spark.couchbase.bucket.transformative", "")
+      .config("com.couchbase.username", "Administrator")
+      .config("com.couchbase.password", "password")
       .getOrCreate()
 
     val mysqlReader = getMysqlReader(spark.sqlContext) // set up a MySQL Reader

@@ -38,6 +38,8 @@ object TwitterFeedExample {
       .setAppName("TwitterFeedExample")
       .setMaster("local[*]")
       .set("spark.couchbase.bucket.twitter", "")
+      .set("com.couchbase.username", "Administrator")
+      .set("com.couchbase.password", "password")
 
     val Array(consumerKey, consumerSecret, accessToken, accessTokenSecret) = args.take(4)
     System.setProperty("twitter4j.oauth.consumerKey", consumerKey)

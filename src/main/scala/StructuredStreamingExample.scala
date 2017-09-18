@@ -59,6 +59,8 @@ object StructuredStreamingExample {
       .master("local[*]") // use the JVM as the master, great for testing
       .config("spark.couchbase.nodes", "127.0.0.1") // connect to couchbase on localhost
       .config("spark.couchbase.bucket.travel-sample", "") // open the travel-sample bucket with empty password
+      .config("com.couchbase.username", "Administrator")
+      .config("com.couchbase.password", "password")
       .getOrCreate()
 
     // Define the Structured Stream from Couchbase with the given Schema

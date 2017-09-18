@@ -35,6 +35,8 @@ object StreamingExample {
     val conf = new SparkConf()
       .setMaster("local[*]")
       .setAppName("StreamingExample")
+      .set("com.couchbase.username", "Administrator")
+      .set("com.couchbase.password", "password")
       .set("com.couchbase.bucket.travel-sample", "")
 
     // Initialize StreamingContext with a Batch interval of 5 seconds

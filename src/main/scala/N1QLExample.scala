@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 import com.couchbase.client.java.query.N1qlQuery
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Row, SparkSession}
 import com.couchbase.spark._
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 
 /**
   * This example shows how to perform a "raw" N1QL query generating an RDD.
@@ -43,6 +44,8 @@ object N1QLExample {
       .master("local[*]") // use the JVM as the master, great for testing
       .config("spark.couchbase.nodes", "127.0.0.1") // connect to couchbase on localhost
       .config("spark.couchbase.bucket.travel-sample", "") // open the travel-sample bucket with empty password
+      .config("com.couchbase.username", "Administrator")
+      .config("com.couchbase.password", "password")
       .getOrCreate()
 
     // This query groups airports by country and counts them.
@@ -58,5 +61,14 @@ object N1QLExample {
       .couchbaseQuery(query)
       .map(_.value)
       .foreach(println)
+
+
+    val schema = StructType(
+        StructField("count", IntegerType) ::
+        StructField("country", StringType) :: Nil
+    )
+
+    val rdd = spark.sparkContext.couchbaseQuery(query).map(r => Row(r.value.getInt("count"), r.value.getString("country")))
+    spark.createDataFrame(rdd, schema).show()
   }
 }
